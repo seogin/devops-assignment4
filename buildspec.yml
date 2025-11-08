@@ -17,18 +17,19 @@ phases:
   post_build:
     commands:
       - echo "Deploying to S3..."
-      - aws s3 sync . s3://$SITE_BUCKET --delete \
-          --exclude "node_modules/*" \
-          --exclude "tests/*" \
-          --exclude "package*.json" \
-          --exclude ".git/*" \
-          --exclude ".gitignore" \
-          --exclude "buildspec.yml"
-      - |
+      - >
+        aws s3 sync . s3://$SITE_BUCKET --delete
+        --exclude "node_modules/*"
+        --exclude "tests/*"
+        --exclude "package*.json"
+        --exclude ".git/*"
+        --exclude ".gitignore"
+        --exclude "buildspec.yml"
+      - >
         if [ -n "$DISTRIBUTION_ID" ]; then
-          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*";
         else
-          echo "No CloudFront distribution configured; skipping invalidation."
+          echo "No CloudFront distribution configured; skipping invalidation.";
         fi
 
 artifacts:
