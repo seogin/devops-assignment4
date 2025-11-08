@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     SITE_BUCKET: "portfolio-site-seogin"
-    DISTRIBUTION_ID: ""  # leave blank if you haven’t created CloudFront yet
+    DISTRIBUTION_ID: ""  # leave blank until CloudFront is set
 
 phases:
   install:
@@ -13,13 +13,25 @@ phases:
   build:
     commands:
       - echo "Running tests..."
-      - if [ -f package.json ]; then npm test -- --ci; else echo "No tests to run"; fi
+      - if [ -f package.json ]; then npm test --ci; else echo "No tests to run"; fi
   post_build:
     commands:
       - echo "Deploying to S3..."
-      - aws s3 sync . s3://$SITE_BUCKET --delete --exclude "node_modules/*" --exclude "tests/*" --exclude "package*.json" --exclude ".git/*" --exclude ".gitignore" --exclude "buildspec.yml"
-      - echo "Deployment complete!"
+      - aws s3 sync . s3://$SITE_BUCKET --delete \
+          --exclude "node_modules/*" \
+          --exclude "tests/*" \
+          --exclude "package*.json" \
+          --exclude ".git/*" \
+          --exclude ".gitignore" \
+          --exclude "buildspec.yml"
+      - |
+        if [ -n "$DISTRIBUTION_ID" ]; then
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+        else
+          echo "No CloudFront distribution configured; skipping invalidation."
+        fi
+
 artifacts:
   files:
-    - '**/*'
+    - "**/*"
   discard-paths: no
