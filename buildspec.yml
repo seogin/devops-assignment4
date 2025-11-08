@@ -1,0 +1,25 @@
+version: 0.2
+
+env:
+  variables:
+    SITE_BUCKET: "portfolio-site-seogin"
+    DISTRIBUTION_ID: ""  # leave blank if you haven’t created CloudFront yet
+
+phases:
+  install:
+    commands:
+      - echo "Installing build dependencies..."
+      - if [ -f package.json ]; then npm ci; else echo "No tests to install"; fi
+  build:
+    commands:
+      - echo "Running tests..."
+      - if [ -f package.json ]; then npm test -- --ci; else echo "No tests to run"; fi
+  post_build:
+    commands:
+      - echo "Deploying to S3..."
+      - aws s3 sync . s3://$SITE_BUCKET --delete --exclude "node_modules/*" --exclude "tests/*" --exclude "package*.json" --exclude ".git/*" --exclude ".gitignore" --exclude "buildspec.yml"
+      - echo "Deployment complete!"
+artifacts:
+  files:
+    - '**/*'
+  discard-paths: no
